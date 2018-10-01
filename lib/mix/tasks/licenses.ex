@@ -6,7 +6,7 @@ defmodule Mix.Tasks.Deps.Licenses do
 
   @moduledoc """
   Checks all your dependencies from your mix.lock file and reads the license information from
-  their `hex_metadata.config` and prints it a nicely formatted table.
+  their `hex_metadata.config` and prints it CSV format.
   If a dependency does not have a `hex_metadata.config` it prints "Could not find license information".
 
   """
@@ -37,17 +37,28 @@ defmodule Mix.Tasks.Deps.Licenses do
         end
       end)
 
-    Mix.Tasks.Hex.print_table(["Dependency", "License"], packages_info)
+    print_licenses(packages_info)
   end
 
   @spec config_to_license_info([tuple], String.t()) :: [String.t()]
   defp config_to_license_info(config, name) do
+    repo =
+      config
+      |> Enum.find_value(fn {k, v} -> if k == "links", do: v end)
+      |> Enum.find_value(fn {k, v} -> if String.downcase(k) == "github", do: v end)
+
     case Enum.find(config, fn {k, _v} -> k == "licenses" end) do
       {_, licenses} ->
-        [Atom.to_string(name), Enum.join(licenses, ", ")]
+        {Atom.to_string(name), Enum.join(licenses, " / "), repo}
 
       _other ->
-        [Atom.to_string(name), "Could not find license information"]
+        {Atom.to_string(name), "Could not find license information", repo}
     end
+  end
+
+  defp print_licenses(packages_info) do
+    IO.puts("name,license,repo")
+    IO.inspect(packages_info)
+    for {name, license, repo} <- packages_info, do: IO.puts("#{name},#{license},#{repo}")
   end
 end

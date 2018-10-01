@@ -42,22 +42,24 @@ defmodule Mix.Tasks.Deps.Licenses do
 
   @spec config_to_license_info([tuple], String.t()) :: [String.t()]
   defp config_to_license_info(config, name) do
+    version = Enum.find_value(config, fn {k, v} -> if k == "version", do: v end)
+
+    license =
+      case Enum.find(config, fn {k, _v} -> k == "licenses" end) do
+        {_, licenses} -> Enum.join(licenses, " / ")
+        _other -> "Could not find license information"
+      end
+
     repo =
       config
       |> Enum.find_value(fn {k, v} -> if k == "links", do: v end)
       |> Enum.find_value(fn {k, v} -> if String.downcase(k) == "github", do: v end)
 
-    case Enum.find(config, fn {k, _v} -> k == "licenses" end) do
-      {_, licenses} ->
-        {Atom.to_string(name), Enum.join(licenses, " / "), repo}
-
-      _other ->
-        {Atom.to_string(name), "Could not find license information", repo}
-    end
+    {Atom.to_string(name), version, license, repo}
   end
 
   defp print_licenses(packages_info) do
-    IO.puts("name,license,repo")
-    for {name, license, repo} <- packages_info, do: IO.puts("#{name},#{license},#{repo}")
+    IO.puts("name,version,license,repo")
+    for {name, version, license, repo} <- packages_info, do: IO.puts("#{name},#{version},#{license},#{repo}")
   end
 end

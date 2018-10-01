@@ -58,7 +58,6 @@ defmodule Mix.Tasks.Deps.Licenses do
 
   defp print_licenses(packages_info) do
     IO.puts("name,license,repo")
-    IO.inspect(packages_info)
     for {name, license, repo} <- packages_info, do: IO.puts("#{name},#{license},#{repo}")
   end
 end
